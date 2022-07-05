@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { SocketController } from "../../utilities/arduino";
+    import type { SocketController } from "../../utilities/socket";
 
     export let sc: SocketController;
 </script>

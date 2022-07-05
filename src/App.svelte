@@ -1,6 +1,6 @@
 
 <script lang="ts">
-	import Actions from "./components/Game.svelte";
+	import Actions from "./game/components/Game.svelte";
 	
 
 </script>

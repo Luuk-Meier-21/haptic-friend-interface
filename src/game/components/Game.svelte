@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { Action, ActionController } from "../utilities/game/actions";
-    import { SocketController } from "../utilities/arduino";
-    import DebugControls from "./debug/Debug-controls.svelte";
+    import { Action, ActionController } from "../actions";
+    import { SocketController } from "../../utilities/socket";
+    import DebugControls from "../debug/Debug-controls.svelte";
     import Status from "./Status.actions.svelte";
 
     let wsState: string;

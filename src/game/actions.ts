@@ -5,8 +5,8 @@
 //      where location is a char (a, b, c) equal to a spot on the controller, 
 //      where state is a number (0, 1, 2) equal to the state the given location has to be put in.
 
-import type { SocketController } from "../arduino";
-import { nullSafeEvent } from "../utilities";
+import type { SocketController } from "../utilities/socket";
+import { nullSafeEvent } from "../utilities/utilities";
 
 // 1. A user starts the game.
 // 2. Music starts

@@ -1,4 +1,4 @@
-import type { SocketController } from "../arduino";
+import type { SocketController } from "../utilities/socket";
 import type { ActionController } from "./actions";
 
 export class EventHandler {
