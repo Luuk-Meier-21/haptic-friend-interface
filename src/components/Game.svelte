@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Action, ActionController } from "../utilities/actions";
+    import { Action, ActionController } from "../utilities/game/actions";
     import { SocketController } from "../utilities/arduino";
     import DebugControls from "./debug/Debug-controls.svelte";
     import Status from "./Status.actions.svelte";
@@ -18,7 +18,6 @@
             if (gameControl[0] == "PAUZE") console.log("PAUZE not implemented");
             if (gameControl[0] == "QUIT") console.log("QUIT not implemented");
         }
-
         // Matches game input from the controller (a1, a2, b1, etc):
         const gameInput = e.data.match(/^[a-zA-Z][0-9]/g);
         if(gameInput) actions.try(gameInput[0]);

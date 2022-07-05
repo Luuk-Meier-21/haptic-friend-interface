@@ -5,8 +5,8 @@
 //      where location is a char (a, b, c) equal to a spot on the controller, 
 //      where state is a number (0, 1, 2) equal to the state the given location has to be put in.
 
-import type { SocketController } from "./arduino";
-import { nullSafeEvent, nullSafeExec } from "./utilities";
+import type { SocketController } from "../arduino";
+import { nullSafeEvent } from "../utilities";
 
 // 1. A user starts the game.
 // 2. Music starts
@@ -31,7 +31,7 @@ export class ActionController implements HapticAction {
     private finishedStack: Action[] = [];
     public inAction: boolean = false;
 
-    constructor(public controller: SocketController) {}
+    constructor(public controller: SocketController) {};
 
     // Event Listeners:
     public onTimeUp: () => void = null;
@@ -75,6 +75,7 @@ export class ActionController implements HapticAction {
         this.finishedStack.push(action);
         this.inAction = false;
         
+
         if (this.onActionCompletion) this.onActionCompletion(this.finishedStack);
         if (this.stack.length <= 0 && this.onTotalCompletion) this.onTotalCompletion(this.finishedStack, true);
         return action;
