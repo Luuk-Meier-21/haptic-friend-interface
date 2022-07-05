@@ -1,49 +1,26 @@
+type Handler<T> = (this: CWebsocket, e: T) => void;
 
-export interface SocketHandlers {
-    onmessage?: (this: CWebsocket, e: MessageEvent<any>) => void;
-    onopen?: (this: CWebsocket, e: Event) => void;
-    onclose?: (this: CWebsocket, e: CloseEvent) => void;
-    onerror?: (this: CWebsocket, e: Event) => void;
-    onevent?: (this: CWebsocket, s: string) => void;
-}
-
+/**
+ * Custom websocket class with added methods
+ */
 export interface CWebsocket extends WebSocket {
-    onevent: (this: WebSocket, s: string) => void;
+    onevent: Handler<string>;
 }
-
-// export class CWebsocket extends WebSocket {
-//     onevent: (this: CWebsocket, s: string) => void = null;
-
-//     constructor() {
-        
-//     }
-// }
 
 export class SocketController {
     ws: CWebsocket;
+
+    onmessage: Handler<MessageEvent<any>> = () => {};
+    onopen: Handler<Event> = () => {};
+    onclose: Handler<CloseEvent> = () => {};
+    onerror: Handler<Event> = () => {};
+    onevent: Handler<string> = () => {};
+
+    constructor(public url: string) {}
     
-
-    constructor(
-        public url: string, 
-        handler: SocketHandlers
-    ) {
-        this.connect();
-        this.ws.onmessage = this.eventWrapper(handler.onmessage)
-        this.ws.onopen = this.eventWrapper(handler.onopen);
-        this.ws.onclose = this.eventWrapper(handler.onclose);
-        this.ws.onerror = this.eventWrapper(handler.onerror);
-        this.ws.onevent = handler.onevent;
-    }
-
-    // NLP: first practical use i found for a higher order function:
-    private eventWrapper = (eventFunc) => (e) => {
-        if (this.ws.onevent) this.ws.onevent(this.getStateString());
-        eventFunc(e);
-    }
     public getState = (): number => this.ws.readyState;
     public getStateString = (): string => {
-        const state = this.getState();
-        switch (state) {
+        switch (this.getState()) {
             case 0:
                 return "CONNECTING"
                 break;
@@ -61,10 +38,24 @@ export class SocketController {
 
     public connect = () => {
         this.ws = new WebSocket(this.url) as CWebsocket; 
+        this.setHandlers();
+    }
+
+    public setHandlers = () => {
+        this.ws.onmessage = this.ev(this.onmessage)
+        this.ws.onopen = this.ev(this.onopen);
+        this.ws.onclose = this.ev(this.onclose);
+        this.ws.onerror = this.ev(this.onerror);
+        this.ws.onevent = this.onevent;
+    }
+
+    // NLP: first practical use i found for a higher order function:
+    private ev = (eventFunc) => (e) => {
+        if (this.ws.onevent) this.ws.onevent(this.getStateString());
+        eventFunc(e);
     }
 
     public send = (message) => {
-        console.log(message)
         this.ws.send(message);
     }
 }

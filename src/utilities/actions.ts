@@ -5,7 +5,9 @@
 //      where location is a char (a, b, c) equal to a spot on the controller, 
 //      where state is a number (0, 1, 2) equal to the state the given location has to be put in.
 
-import { nullSafeEvent } from "../../utilities/utilities";
+import type { SocketController } from "./arduino";
+import { nullSafeEvent } from "./utilities";
+
 
 // 1. A user starts the game.
 // 2. Music starts
@@ -29,6 +31,8 @@ export class ActionController implements HapticAction {
     private stack: Action[] = [];
     private finishedStack: Action[] = [];
 
+    constructor(public controller: SocketController) {}
+
     // Event Listeners:
     public onTimeUp: () => void = null;
     public onActionCompletion: (succes: boolean) => void = null;
@@ -40,14 +44,13 @@ export class ActionController implements HapticAction {
     public push = (...action: Action[]) => this.stack.push(...action);
 
     // Creation methods:
-    public create = (ref: string, duration: number): Action => new Action(ref, duration);
+    public create = (ref: string, duration: number): Action => new Action(ref, duration, this.controller);
     public factory = (callback: (a: ActionController) => Action[]) => callback(this).map(action => this.push(action));
 
     /** Starts current active `Action`. */
-    public start = async () => {
+    public start = () => {
         this.new();
         const outOfTimeHandler = () => {
-            console.log("out")
             nullSafeEvent(this.onTimeUp);
             this.complete(false);
         }
@@ -58,6 +61,7 @@ export class ActionController implements HapticAction {
         // Only one try. or give them a second chance?
         const isSucces: boolean = this.currAction.try(givenRef);
         this.complete(isSucces);
+        console.log(`Tried: ${isSucces}`);
         return isSucces;
     }
 
@@ -71,18 +75,31 @@ export class ActionController implements HapticAction {
 
 export class Action implements HapticAction {
     location: string;
-    state: number;
+    onState: string;
+    offState: string = "0";
     succes: boolean = null;
     completed: boolean = false;
 
-    constructor (public ref: string, public duration: number) {
+    constructor (
+        public ref: string, 
+        public duration: number, 
+        public controller: SocketController
+    ) {
         this.location = ref.charAt(0);
-        this.state = Number.parseInt(ref.charAt(1));
+        this.onState = ref.charAt(1);
+    }
+
+    set = (isOn: boolean) => {
+        const newState = isOn ? this.onState : this.offState;
+        const controlString = this.location + newState;
+        this.controller.send(controlString);
     }
 
     start = async (outOfTime: () => void) => {
-        console.log(`Start`);
-        console.log(this);
+        // console.log(`Start`);
+        // console.log(this);
+        
+        this.set(true);
         setTimeout(() => {
             outOfTime();
         }, this.duration);
@@ -93,16 +110,20 @@ export class Action implements HapticAction {
      * @returns {boolean} boolean thats true when the action was a succes.
      */
     try = (givenRef: string): boolean => {
-        console.log(`Try ${givenRef}`);
-        console.log(this);
+        // console.log(`Try ${givenRef}`);
+        // console.log(this);
+
         return !this.completed && this.ref == givenRef;
     }
 
     complete = (succes: boolean): Action => {
-        console.log(`Complete`);
-        console.log(this);
+        // console.log(`Complete`);
+        // console.log(this);
+
+        this.set(false);
         this.completed = true;
         this.succes = succes;
+        
         return this;
     }
 }
