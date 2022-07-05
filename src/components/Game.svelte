@@ -1,35 +1,27 @@
 <script lang="ts">
-    import { ActionController } from "../utilities/actions";
+    import { Action, ActionController } from "../utilities/actions";
     import { SocketController } from "../utilities/arduino";
     import DebugControls from "./debug/Debug-controls.svelte";
     import Status from "./Status.actions.svelte";
 
     let wsState: string;
+    let awaitingActions: Action[] = [];
+    let finishedActions: Action[] = [];
+
 	const sc = new SocketController('ws://localhost:3000');
 	sc.onmessage = (e) => {
-        console.log(e.data)
-        // Match all a1, a2, b1, etc formats:
-        // const controlMsg = e.data.match(/^[a-zA-Z][0-9]/g);
-        // if(controlMsg) {
-        //     console.log(controlMsg[0])
-        //     actions.try(controlMsg[0]);
-        // }
+        // Matches control input from the controller (QUIT, RETRY, etc):
+        const gameControl = e.data.match(/([A-Z]+)/g);
+        if(gameControl) {
+            if (gameControl[0] == "START") actions.start();
+            if (gameControl[0] == "RETRY") console.log("RETRY not implemented");
+            if (gameControl[0] == "PAUZE") console.log("PAUZE not implemented");
+            if (gameControl[0] == "QUIT") console.log("QUIT not implemented");
+        }
 
-        // if (e.data.length < 3) {
-        //     const command = e.data.substring(0, 1);
-
-        //     console.log(`try ${command}`);
-        //     actions.try(e.data);
-        // } else if (e.data == "RETRY"){
-        //     console.log("RETRY given")
-        // }
-        // console.log(e.data)
-	}
-	sc.onclose = (e) => {
-		console.log("WS closed");
-	}
-	sc.onopen = (e) => {
-		console.log("WS open");
+        // Matches game input from the controller (a1, a2, b1, etc):
+        const gameInput = e.data.match(/^[a-zA-Z][0-9]/g);
+        if(gameInput) actions.try(gameInput[0]);
 	}
 	sc.onevent = (s) => {
 		wsState = s;
@@ -39,11 +31,11 @@
     const actions = new ActionController(sc);
     actions.factory(a => [
         a.create("a1", 5000),
-        a.create("a2", 5000),
+        a.create("b2", 5000),
         a.create("a1", 5000)
     ]);
-    actions.onActionCompletion = (succes: boolean) => {
-        
+    actions.onActionCompletion = (finished: Action[]) => {
+        finishedActions = finished;
     }
     actions.onTimeUp = () => {
         console.log("Times UP")
@@ -53,7 +45,11 @@
 <section>
     <Status state={wsState}/>
     <DebugControls sc={sc}/>
-
+    <ul>
+        {#each finishedActions as action}
+            <li>{action.ref} | {action.succes}</li>
+        {/each}
+    </ul>
     <div>
         <button on:click={actions.start}>
             Start

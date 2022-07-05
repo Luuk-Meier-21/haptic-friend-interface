@@ -6,8 +6,7 @@
 //      where state is a number (0, 1, 2) equal to the state the given location has to be put in.
 
 import type { SocketController } from "./arduino";
-import { nullSafeEvent } from "./utilities";
-
+import { nullSafeEvent, nullSafeExec } from "./utilities";
 
 // 1. A user starts the game.
 // 2. Music starts
@@ -30,14 +29,15 @@ export class ActionController implements HapticAction {
     private currAction: Action = null;
     private stack: Action[] = [];
     private finishedStack: Action[] = [];
+    public inAction: boolean = false;
 
     constructor(public controller: SocketController) {}
 
     // Event Listeners:
     public onTimeUp: () => void = null;
-    public onActionCompletion: (succes: boolean) => void = null;
+    public onActionCompletion: (finished: Action[]) => void = null;
     // TODO: implement total completion.
-    public onTotalCompletion: (succes: boolean, completedActions: number) => void = null;
+    public onTotalCompletion: (finished: Action[], succes: boolean) => void = null;
 
     // Stack methods: 
     public new = () => this.currAction = this.stack.shift();
@@ -49,26 +49,34 @@ export class ActionController implements HapticAction {
 
     /** Starts current active `Action`. */
     public start = () => {
-        this.new();
-        const outOfTimeHandler = () => {
-            nullSafeEvent(this.onTimeUp);
-            this.complete(false);
+        if (!this.inAction) {
+            this.new();
+            const outOfTimeHandler = () => {
+                nullSafeEvent(this.onTimeUp);
+                this.complete(false);
+            }
+            this.currAction.start(outOfTimeHandler);
+            this.inAction = true;
         }
-        this.currAction.start(outOfTimeHandler);
     }
     /** Compairs givenRef to ref of current active `Action`, when equal returns true, else false. */
     public try = (givenRef: string): boolean => {
         // Only one try. or give them a second chance?
-        const isSucces: boolean = this.currAction.try(givenRef);
-        this.complete(isSucces);
-        console.log(`Tried: ${isSucces}`);
-        return isSucces;
+        if (this.inAction) {
+            const isSucces: boolean = this.currAction.try(givenRef);
+            this.complete(isSucces);
+            return isSucces;
+        }
+        return false;
     }
 
     public complete = (succes: boolean): Action => {
         const action = this.currAction.complete(succes);
         this.finishedStack.push(action);
-        nullSafeEvent(this.onTotalCompletion);
+        this.inAction = false;
+        
+        if (this.onActionCompletion) this.onActionCompletion(this.finishedStack);
+        if (this.stack.length <= 0 && this.onTotalCompletion) this.onTotalCompletion(this.finishedStack, true);
         return action;
     }
 }
@@ -79,6 +87,7 @@ export class Action implements HapticAction {
     offState: string = "0";
     succes: boolean = null;
     completed: boolean = false;
+    timeout: NodeJS.Timeout;
 
     constructor (
         public ref: string, 
@@ -88,6 +97,9 @@ export class Action implements HapticAction {
         this.location = ref.charAt(0);
         this.onState = ref.charAt(1);
     }
+    
+    setTimer = (callback: () => void) => this.timeout = setTimeout(callback, this.duration);
+    clearTimer = () => clearTimeout(this.timeout);
 
     set = (isOn: boolean) => {
         const newState = isOn ? this.onState : this.offState;
@@ -95,14 +107,11 @@ export class Action implements HapticAction {
         this.controller.send(controlString);
     }
 
-    start = async (outOfTime: () => void) => {
-        // console.log(`Start`);
-        // console.log(this);
-        
+    start = (outOfTime: () => void) => {
         this.set(true);
-        setTimeout(() => {
+        this.setTimer(() => {
             outOfTime();
-        }, this.duration);
+        })
     }
 
     /**
@@ -110,17 +119,12 @@ export class Action implements HapticAction {
      * @returns {boolean} boolean thats true when the action was a succes.
      */
     try = (givenRef: string): boolean => {
-        // console.log(`Try ${givenRef}`);
-        // console.log(this);
-
         return !this.completed && this.ref == givenRef;
     }
 
     complete = (succes: boolean): Action => {
-        // console.log(`Complete`);
-        // console.log(this);
-
         this.set(false);
+        this.clearTimer();
         this.completed = true;
         this.succes = succes;
         
