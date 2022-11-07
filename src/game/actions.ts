@@ -5,6 +5,7 @@
 //      where location is a char (a, b, c) equal to a spot on the controller, 
 //      where state is a number (0, 1, 2) equal to the state the given location has to be put in.
 
+import { UtilityController } from "../utilities/controller";
 import type { SocketController } from "../utilities/socket";
 import { nullSafeEvent } from "../utilities/utilities";
 
@@ -25,19 +26,21 @@ export interface HapticAction {
     complete: (succes: boolean) => Action;
 }
 
-export class ActionController implements HapticAction {
+export class ActionController extends UtilityController implements HapticAction {
     private currAction: Action = null;
     private stack: Action[] = [];
     private finishedStack: Action[] = [];
     public inAction: boolean = false;
 
-    constructor(public controller: SocketController) {};
+    constructor(public controller: SocketController) {
+        super();
+    };
 
     // Event Listeners:
-    public onTimeUp: () => void = null;
-    public onActionCompletion: (finished: Action[]) => void = null;
+    public onTimeUp: () => void = () => {};
+    public onActionCompletion: (finished: Action[]) => void = () => {};
     // TODO: implement total completion.
-    public onTotalCompletion: (finished: Action[], succes: boolean) => void = null;
+    public onTotalCompletion: (finished: Action[], succes: boolean) => void = () => {};
 
     // Stack methods: 
     public new = () => this.currAction = this.stack.shift();
@@ -75,9 +78,8 @@ export class ActionController implements HapticAction {
         this.finishedStack.push(action);
         this.inAction = false;
         
-
-        if (this.onActionCompletion) this.onActionCompletion(this.finishedStack);
-        if (this.stack.length <= 0 && this.onTotalCompletion) this.onTotalCompletion(this.finishedStack, true);
+        this.onActionCompletion(this.finishedStack);
+        if (this.stack.length <= 0) this.onTotalCompletion(this.finishedStack, true);
         return action;
     }
 }

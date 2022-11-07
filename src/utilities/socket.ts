@@ -1,3 +1,5 @@
+import { UtilityController } from "./controller";
+
 type Handler<T> = (this: CWebsocket, e: T) => void;
 
 /**
@@ -7,7 +9,7 @@ export interface CWebsocket extends WebSocket {
     onevent: Handler<string>;
 }
 
-export class SocketController {
+export class SocketController extends UtilityController {
     ws: CWebsocket;
 
     onmessage: Handler<MessageEvent<any>> = () => {};
@@ -16,7 +18,9 @@ export class SocketController {
     onerror: Handler<Event> = () => {};
     onevent: Handler<string> = () => {};
 
-    constructor(public url: string) {}
+    constructor(public url: string) {
+        super();
+    }
     
     public getState = (): number => this.ws.readyState;
     public getStateString = (): string => {
@@ -39,6 +43,7 @@ export class SocketController {
     public connect = () => {
         this.ws = new WebSocket(this.url) as CWebsocket; 
         this.setHandlers();
+        return this;
     }
 
     public setHandlers = () => {
