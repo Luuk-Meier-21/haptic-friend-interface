@@ -5,7 +5,7 @@
 {#if state === "OPEN"}
     <p class="connection-open">Connection open</p>
 {:else if state === "CONNECTING"}
-    <p>CONNECTING...</p>
+    <p>Connecting...</p>
 {:else}
-    <p>Closed</p>
+    <p>Connection closed</p>
 {/if}

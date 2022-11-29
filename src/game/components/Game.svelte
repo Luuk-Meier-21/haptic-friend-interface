@@ -6,7 +6,6 @@
     import { GameController } from "../game";
 
     let wsState: string;
-    let awaitingActions: Action[] = [];
     let finishedActions: Action[] = [];
 
     const game = new GameController()
@@ -14,6 +13,7 @@
             gc.onSocketSetup = (sc: SocketController) => {
                 sc.onevent = (s) => {
                     wsState = s;
+                    console.log(s)
                 }
             }
             gc.onActionSetup = (ac: ActionController) => {

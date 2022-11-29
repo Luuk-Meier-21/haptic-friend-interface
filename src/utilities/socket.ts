@@ -63,4 +63,15 @@ export class SocketController extends UtilityController {
     public send = (message) => {
         this.ws.send(message);
     }
+
+    /**
+     * Alias of super.setup function.
+     * 
+     * @param setupFn 
+     * @returns this object
+     */
+    public eventSetup = (setupFn: (controller: this) => void) => {
+        setupFn(this);
+        return this;
+    }
 }
