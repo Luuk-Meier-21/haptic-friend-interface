@@ -17,6 +17,7 @@ export class SocketController extends UtilityController {
     onclose: Handler<CloseEvent> = () => {};
     onerror: Handler<Event> = () => {};
     onevent: Handler<string> = () => {};
+    onsend: Handler<string> = () => {};
 
     constructor(public url: string) {
         super();
@@ -47,20 +48,22 @@ export class SocketController extends UtilityController {
     }
 
     public setHandlers = () => {
-        this.ws.onmessage = this.ev(this.onmessage)
-        this.ws.onopen = this.ev(this.onopen);
-        this.ws.onclose = this.ev(this.onclose);
-        this.ws.onerror = this.ev(this.onerror);
+        this.ws.onmessage = this.event(this.onmessage)
+        this.ws.onopen = this.event(this.onopen);
+        this.ws.onclose = this.event(this.onclose);
+        this.ws.onerror = this.event(this.onerror);
         this.ws.onevent = this.onevent;
     }
 
     // NLP: first practical use i found for a higher order function:
-    private ev = (eventFunc) => (e) => {
+    private event = (eventFunc) => (e) => {
         if (this.ws.onevent) this.ws.onevent(this.getStateString());
         eventFunc(e);
     }
 
     public send = (message) => {
+        // this.onsend(message);
+        console.log(message)
         this.ws.send(message);
     }
 

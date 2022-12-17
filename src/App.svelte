@@ -1,5 +1,6 @@
 
 <script lang="ts">
+  import DebugControls from "./game/debug/Debug-controls.svelte";
   import { SocketController } from "./utilities/socket";
 
   const sc = new SocketController('ws://localhost:3000')
@@ -29,14 +30,12 @@
 		.connect();
 
 	$: socketState = "UNKNOWN";
-	
 </script>
 
 <div>
 	<h1>Haptic Node</h1>
 	<p>{ socketState }</p>
-		<!-- disabled={sc.getStateString() != "OPEN"} -->
-		<!-- <Actions/> -->
+	<DebugControls sc={sc}/>
 </div>
 
 <style lang="scss">
