@@ -2,33 +2,60 @@
     import type { SocketController } from "../../utilities/socket";
 
     export let sc: SocketController;
+    let types = [
+		{ id: 'i', text: `Instruction`, format: 'i<node><state>'},
+		{ id: 's', text: `Setter`, format: 's<node><type><character>'},
+		{ id: 'g', text: `Getter`, format: 'g<type><node?>'}
+	];
+    let nodes = [
+        'a'
+    ]
+    let selectedType;
+    let message = '';
+
+    function handleSubmit() {
+		sc.send(selectedType.id + message);
+	}
 </script>
 
 <section class="controller">
     <div class="controller__node node--a">
         <h3>Node A</h3>
         <button class="button"
-            on:mousedown={() => sc.send('a1')} 
-            on:mouseup={() => sc.send('a0')}>
-            Send A normal
+            on:mousedown={() => sc.send('ia1')} 
+            on:mouseup={() => sc.send('ia0')}>
+            Instruction node a
         </button>
         <button class="button"
-            on:mousedown={() => sc.send('a2')} 
-            on:mouseup={() => sc.send('a0')}>
-            Send A bright
+            on:mousedown={() => sc.send('ia2')} 
+            on:mouseup={() => sc.send('ia0')}>
+            Bright instruction node a
         </button>
-    </div>
-    <div class="controller__node node--a">
-        <h3>Node B</h3>
+        <form on:submit|preventDefault={handleSubmit}>
+            {#if  selectedType }
+                <p>Format: { selectedType.format }</p>
+            {/if}
+            <select bind:value={selectedType} on:change="{() => message = ''}">
+                {#each types as type}
+                    <option value={type}>
+                        {type.text}
+                    </option>
+                {/each}
+            </select>
+        
+            <input bind:value={message}>
+        
+            <button disabled={!message} type=submit>
+                Submit
+            </button>
+        </form>
         <button class="button"
-            on:mousedown={() => sc.send('b1')} 
-            on:mouseup={() => sc.send('b0')}>
-            Send B normal
+            on:mousedown={() => sc.send('gl')}>
+            Get listeners
         </button>
-        <button class="button" 
-            on:mousedown={() => sc.send('b2')} 
-            on:mouseup={() => sc.send('b0')}>
-            Send B bright
+        <button class="button"
+            on:mousedown={() => sc.send('gn')}>
+            Get nodes
         </button>
     </div>
 </section>
